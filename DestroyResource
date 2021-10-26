@@ -1,0 +1,33 @@
+Delete the ELB security group using the destroy command and the target option, and enter yes to accept the plan:
+
+terraform destroy -target=aws_security_group.elb_sg
+
+
+To destroy the target resource, all the resources that depend on the target must also be destroyed. You can see the ELB security group highlighted in the following dependency graph:
+
+
+
+All of the resources above the security group are the ones that are destroyed. The web_sg security group depends on the elb_sg because it has a rule that only allows traffic from the elb_sg security group.
+
+ 
+
+2. Run the plan command to verify that destroying resources doesn't affect  desired configuration:
+
+
+terraform plan
+
+
+The plan is to add back the resources you just destroyed. This may be what you want if a resource is modified outside of Terraform and it can't be brought back to the desired state requiring you to destroy and recreate it. If you actually no longer need a resource,  should remove it from the configuration.
+
+ 
+
+3. Destroy all the remaining resources managed by Terraform, and enter yes when prompted:
+
+
+terraform destroy
+
+
+6. Press ctrl+c to stop the watch command..
+
+
+
