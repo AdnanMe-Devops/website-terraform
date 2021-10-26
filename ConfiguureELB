@@ -1,0 +1,63 @@
+Create an ELB configuration in a file named load_balancer.tf:
+
+cat > load_balancer.tf <<'EOF'
+resource "aws_elb" "web" {
+  name = "web-elb"
+  subnets = ["${aws_subnet.public_subnet.*.id}"]
+  security_groups = ["${aws_security_group.elb_sg.id}"]
+  instances = ["${aws_instance.web.*.id}"]
+
+  # Listen for HTTP requests and distribute them to the instances
+  listener { 
+    instance_port     = 80
+    instance_protocol = "http"
+    lb_port           = 80
+    lb_protocol       = "http"
+  }
+
+  # Check instance health every 10 seconds
+  health_check {
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+    timeout = 3
+    target = "HTTP:80/"
+    interval = 10
+  }
+}
+
+EOF
+The ELB is internet-facing by default. we can create an internal ELB by adding an internal argument and setting it to true. 
+
+ 
+
+2. Add an output that will save the DNS address of the ELB as the website address:
+
+
+cat >> outputs.tf <<'EOF'
+output "site_address" {
+  value = "${aws_elb.web.dns_name}"
+}
+
+EOF
+ 
+
+3. Apply the configuration changes:
+
+
+terraform apply
+
+ 
+
+4. Store the site_address output in a shell variable:
+
+
+site_address=$(terraform output site_address)
+ 
+
+5. Send an HTTP request to the ELB every two seconds using the watch and curl command:
+
+
+watch curl -s $site_address
+
+
+It takes about a minute for the ELB to start sending requests to the instances and will eventually see messages from the web server instances and  should notice the instance ID changing between two values. This verifies the ELB is distributing the traffic to all of the instances.
